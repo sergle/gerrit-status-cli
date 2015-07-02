@@ -1,0 +1,29 @@
+[gerrit]
+user = my-login
+# to generate password: Gerrit -> Settings -> HTTP Password 
+password = my-password 
+host = example.com:8443
+ci = jenkins
+
+# 256 color terminal
+[color]
+verified = 77
+bad = 160
+plus = 215
+ok = 120
+absent = 238
+title = 110
+
+# # 16 color terminal
+# [color]
+# verified = green
+# bad = red
+# plus = yellow
+# ok = green
+# absent = default
+# title = cyan
+
+# aliases to show instead of project name (when they are long)
+[project]
+alias=short:some-very-long-project-name
+alias=p2:another-very-long-name
