@@ -1,6 +1,6 @@
 ALL:
-	mkdir -p bin src pkg
-	GOPATH=`pwd` GOBIN="`pwd`/bin" go get
+	mkdir -p src pkg
+	GOPATH=`pwd` GOBIN="`pwd`" go get
 
 clean:
-	rm -fr bin src pkg
+	rm -fr src pkg
