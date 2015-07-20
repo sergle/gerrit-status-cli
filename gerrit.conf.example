@@ -4,6 +4,8 @@ user = my-login
 password = my-password 
 host = example.com:8443
 ci = jenkins
+# limit number of concurrent requests
+connections = 15
 
 # 256 color terminal
 [color]

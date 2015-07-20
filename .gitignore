@@ -2,3 +2,4 @@ gerrit.conf
 pkg
 src
 bin
+gerrit-status

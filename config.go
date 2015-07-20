@@ -10,6 +10,7 @@ type Config struct {
             Password string
             Host     string
             CI       string
+            Connections int
         }
         Color ColorTheme
         Project struct {

@@ -9,9 +9,12 @@ import (
 
 const ConfigFile = "gerrit.conf"
 
+
 var gerrit *g.Gerrit
 var theme *ColorTheme
 var proj_alias map[string]string
+// default limit of concurrent connections
+var Concurrent_GETs int = 10
 
 func main() {
 
@@ -22,6 +25,10 @@ func main() {
     }
 
     gerrit = g.New(cfg.Gerrit.User, cfg.Gerrit.Password, cfg.Gerrit.Host, cfg.Gerrit.CI)
+
+    if cfg.Gerrit.Connections > 0 {
+        Concurrent_GETs = cfg.Gerrit.Connections
+    }
 
     theme = NewColorTheme(&cfg.Color)
 
@@ -51,10 +58,22 @@ func dashboard(query_string string) () {
     }
 
     // get changes in parallel
-    ch := make(chan *change.LongChange, num_changes)
+    ch_out := make(chan *change.LongChange, num_changes)
+    ch_in := make(chan string, num_changes)
+
+    // limit concurrent get's 
+    num_workers := Concurrent_GETs
+    if num_workers > num_changes {
+        num_workers = num_changes
+    }
+
+    // start 'workers'
+    for i := 0; i < num_workers; i++ {
+        go get_change(ch_in, ch_out)
+    }
 
     for _, change := range change_list {
-        go get_change(change.Id, ch)
+        ch_in <- change.Id
     }
 
     var processed = 0;
@@ -63,13 +82,18 @@ func dashboard(query_string string) () {
     Loop:
     for {
         select {
-            case change := <-ch:
+            case change := <-ch_out:
                 processed++
                 ch_list = append(ch_list, change)
                 if processed == num_changes {
                     break Loop
                 }
         }
+    }
+
+    // and signal exit to worker goroutines
+    for i := 0; i < num_workers; i++ {
+        ch_in <- "EXIT"
     }
 
     // sort by Updated date
@@ -79,14 +103,25 @@ func dashboard(query_string string) () {
     return
 }
 
-func get_change(id string, ch chan<- *change.LongChange) () {
+func get_change(ch_in <-chan string, ch_out chan<- *change.LongChange) () {
 
-    detail, err := gerrit.GetChange(id)
-    if err != nil {
-        fmt.Printf("Failed to fetch change: %s\n", id)
+    for {
+        select {
+            case id := <-ch_in:
+
+            if id == "EXIT" {
+                return
+            }
+
+            detail, err := gerrit.GetChange(id)
+            if err != nil {
+                fmt.Printf("Failed to fetch change: %s\n", id)
+            }
+
+            ch_out <- detail
+        }
     }
 
-    ch <- detail
     return
 }
 
