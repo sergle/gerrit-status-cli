@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
         "strings"
+        "flag"
         g "github.com/sergle/go-gerrit"
         "github.com/sergle/go-gerrit/change"
 )
@@ -18,7 +19,9 @@ var Concurrent_GETs int = 10
 
 func main() {
 
-    cfg, err := ReadConfig(ConfigFile)
+    only_new, conf_file := parse_args()
+
+    cfg, err := ReadConfig(conf_file)
     if err != nil {
         fmt.Printf("Error reading config - %s\n", err)
         return
@@ -39,12 +42,21 @@ func main() {
         proj_alias[ parts[1] ] = parts[0]
     }
 
-    dashboard("?q=owner:self+status:open")
-    dashboard("?q=is:reviewer+status:open+-owner:self")
+    dashboard("?q=owner:self+status:open", only_new)
+    dashboard("?q=is:reviewer+status:open+-owner:self", only_new)
 }
 
+func parse_args() (bool, string) {
+    var only_new = flag.Bool("u", false, "Show only not reviewed changes")
+    var conf_file = flag.String("f", ConfigFile, "Path to config file")
+    flag.Parse()
+
+    return *only_new, *conf_file
+}
+
+
 // get list of changes
-func dashboard(query_string string) () {
+func dashboard(query_string string, only_new bool) () {
     change_list, err := gerrit.FetchChangeList(query_string)
     if err != nil {
         return
@@ -98,7 +110,7 @@ func dashboard(query_string string) () {
 
     // sort by Updated date
     gerrit.SortChanges(ch_list)
-    print_change_list(ch_list)
+    print_change_list(ch_list, only_new)
 
     return
 }
@@ -125,8 +137,24 @@ func get_change(ch_in <-chan string, ch_out chan<- *change.LongChange) () {
     return
 }
 
-func print_change_list(list []*change.LongChange) () {
+func print_change_list(list []*change.LongChange, only_new bool) () {
     for _, ch := range list {
+
+        if only_new {
+            skip := false
+            // skip changes which I already reviewed
+            for _, p := range ch.Labels.CodeReview.All {
+                if gerrit.IsMyself(p.Username) && p.Value != 0 {
+                    // reviewed
+                    skip = true
+                    break
+                }
+            }
+
+            if skip {
+                continue
+            }
+        }
 
         ci_username, verified := gerrit.IsVerified(ch)
 
