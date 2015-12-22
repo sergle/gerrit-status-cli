@@ -2,10 +2,10 @@
 
 cli tool to view list of active review in Gerrit
 
-[[https://raw.githubusercontent.com/sergle/gerrit-status-cli/master/img/screenshot.png]]
+<img src="https://raw.githubusercontent.com/sergle/gerrit-status-cli/master/img/screenshot.png">
 
 1. Review status
-  * ⨂  cannot be merged
+  * ⨂ cannot be merged
   * ✔  approved (+2 mark)
   * +  looks good, but someone needs apporove it (+1 mark)
   * -  someones prefer you didn't submit this (-1 mark)
