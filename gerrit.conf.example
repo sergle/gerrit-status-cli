@@ -29,3 +29,5 @@ title = 110
 [project]
 alias=short:some-very-long-project-name
 alias=p2:another-very-long-name
+# override CI username
+ci=p2:robot

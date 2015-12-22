@@ -14,6 +14,7 @@ const ConfigFile = "gerrit.conf"
 var gerrit *g.Gerrit
 var theme *ColorTheme
 var proj_alias map[string]string
+var proj_ci map[string]string
 // default limit of concurrent connections
 var Concurrent_GETs int = 10
 
@@ -41,6 +42,28 @@ func main() {
         parts := strings.SplitN(alias, ":", 2)
         proj_alias[ parts[1] ] = parts[0]
     }
+
+    // format: alias:CIname
+    proj_ci = make(map[string]string)
+    for _, line := range cfg.Project.CI {
+        parts := strings.SplitN(line, ":", 2)
+        proj_ci[ parts[0] ] = parts[1]
+    }
+
+    // callback func
+    ci_name_cb := func(p string) string {
+        proj, found := proj_alias[p]
+        if ! found {
+            proj = p
+        }
+        ci, found := proj_ci[proj]
+        if ! found {
+            ci = cfg.Gerrit.CI
+        }
+        return ci
+    }
+    gerrit.SetCICallback(ci_name_cb)
+
 
     dashboard("?q=owner:self+status:open", only_new)
     dashboard("?q=is:reviewer+status:open+-owner:self", only_new)
@@ -216,7 +239,7 @@ func print_change_list(list []*change.LongChange, only_new bool) () {
 
         for _, p := range ch.Labels.CodeReview.All {
             // exclude CI username (shown for verified)
-            if gerrit.IsCI(p.Username) {
+            if gerrit.IsCI(p.Username, ch) {
                 continue
             }
             rv_color := theme.Reset

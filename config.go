@@ -15,6 +15,8 @@ type Config struct {
         Color ColorTheme
         Project struct {
             Alias []string
+            // redefine CI user on project basis
+            CI []string
         }
 }
 
