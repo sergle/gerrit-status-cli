@@ -4,3 +4,6 @@ ALL:
 
 clean:
 	rm -fr src pkg
+
+static:
+	GOPATH=`pwd` GO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w' .
