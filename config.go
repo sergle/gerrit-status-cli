@@ -1,7 +1,7 @@
 package main
 
 import (
-    "code.google.com/p/gcfg"
+    "github.com/scalingdata/gcfg"
 )
 
 type Config struct {
